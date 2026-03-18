@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>4,000 Weeks</title>
+  <title>Momento Mori</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -273,7 +273,11 @@
     <h2>When were you born?</h2>
     <p>This stays in your browser. Nothing is sent anywhere.</p>
     <input type="date" id="birthday-input" min="1920-01-01">
-    <br>
+    <label style="display:block; margin-top:1rem; color:#888; font-size:0.8rem;">How long do you expect to live?</label>
+    <div style="display:flex; align-items:center; gap:0.5rem; justify-content:center; margin-top:0.4rem; margin-bottom:1rem;">
+      <input type="range" id="lifespan-input" min="50" max="120" value="80" style="flex:1; accent-color:#4a9eff;">
+      <span id="lifespan-display" style="font-size:1rem; color:#e0e0e0; min-width:5ch; text-align:center;">80 yr</span>
+    </div>
     <button id="save-birthday" disabled>Begin</button>
   </div>
 </div>
@@ -281,7 +285,7 @@
 <div class="tooltip" id="tooltip"></div>
 
 <header>
-  <h1>4,000 Weeks</h1>
+  <h1>Momento Mori</h1>
   <p id="subtitle"></p>
   <div class="stats" id="stats"></div>
   <div class="controls" id="controls" style="display: none;">
@@ -296,21 +300,24 @@
 </div>
 
 <footer>
-  Based on an average lifespan of 80 years
+  Momento Mori
 </footer>
 
 <script>
-  const LIFESPAN_YEARS = 80;
   const WEEKS_IN_YEAR = 52;
-  const TOTAL_WEEKS = LIFESPAN_YEARS * WEEKS_IN_YEAR;
-  const TOTAL_DAYS = LIFESPAN_YEARS * 365;
 
+  let lifespanYears = 80;
   let birthday = null;
   let mode = 'weeks';
+
+  function totalWeeks() { return lifespanYears * WEEKS_IN_YEAR; }
+  function totalDays() { return lifespanYears * 365; }
 
   const grid = document.getElementById('grid');
   const modal = document.getElementById('modal');
   const bdayInput = document.getElementById('birthday-input');
+  const lifespanInput = document.getElementById('lifespan-input');
+  const lifespanDisplay = document.getElementById('lifespan-display');
   const saveBtn = document.getElementById('save-birthday');
   const controls = document.getElementById('controls');
   const stats = document.getElementById('stats');
@@ -319,6 +326,10 @@
   const btnWeeks = document.getElementById('btn-weeks');
   const btnDays = document.getElementById('btn-days');
   const btnReset = document.getElementById('btn-reset');
+
+  lifespanInput.addEventListener('input', () => {
+    lifespanDisplay.textContent = lifespanInput.value + ' yr';
+  });
 
   // Set max date to today
   bdayInput.max = new Date().toISOString().split('T')[0];
@@ -330,7 +341,9 @@
   saveBtn.addEventListener('click', () => {
     if (!bdayInput.value) return;
     birthday = new Date(bdayInput.value + 'T00:00:00');
+    lifespanYears = parseInt(lifespanInput.value);
     localStorage.setItem('4kweeks_birthday', bdayInput.value);
+    localStorage.setItem('4kweeks_lifespan', lifespanYears);
     modal.style.display = 'none';
     render();
   });
@@ -339,11 +352,15 @@
   btnDays.addEventListener('click', () => { mode = 'days'; updateButtons(); render(); });
   btnReset.addEventListener('click', () => {
     localStorage.removeItem('4kweeks_birthday');
+    localStorage.removeItem('4kweeks_lifespan');
     birthday = null;
+    lifespanYears = 80;
     controls.style.display = 'none';
     stats.innerHTML = '';
     subtitle.textContent = '';
     grid.innerHTML = '';
+    lifespanInput.value = 80;
+    lifespanDisplay.textContent = '80 yr';
     modal.style.display = 'flex';
   });
 
@@ -366,10 +383,10 @@
     const now = new Date();
     const livedDays = daysBetween(birthday, now);
     const livedWeeks = weeksBetween(birthday, now);
-    const remainingDays = Math.max(0, TOTAL_DAYS - livedDays);
-    const remainingWeeks = Math.max(0, TOTAL_WEEKS - livedWeeks);
+    const remainingDays = Math.max(0, totalDays() - livedDays);
+    const remainingWeeks = Math.max(0, totalWeeks() - livedWeeks);
     const ageYears = (livedDays / 365.25).toFixed(1);
-    const pctLived = ((livedDays / TOTAL_DAYS) * 100).toFixed(1);
+    const pctLived = ((livedDays / totalDays()) * 100).toFixed(1);
 
     subtitle.textContent = `Age ${ageYears} \u2014 ${pctLived}% elapsed`;
 
@@ -400,7 +417,7 @@
     grid.style.cssText = 'display: flex; flex-direction: column; gap: 1px;';
     document.documentElement.style.setProperty('--sq-size', '8px');
 
-    for (let year = 0; year < LIFESPAN_YEARS; year++) {
+    for (let year = 0; year < lifespanYears; year++) {
       const row = document.createElement('div');
       row.className = 'year-row';
 
@@ -418,7 +435,7 @@
           sq.classList.add('lived');
         } else if (idx === livedWeeks) {
           sq.classList.add('current');
-        } else if (idx < TOTAL_WEEKS) {
+        } else if (idx < totalWeeks()) {
           sq.classList.add('remaining');
         } else {
           sq.classList.add('beyond');
@@ -442,7 +459,7 @@
     // Use a document fragment for performance
     const frag = document.createDocumentFragment();
 
-    for (let i = 0; i < TOTAL_DAYS; i++) {
+    for (let i = 0; i < totalDays(); i++) {
       const sq = document.createElement('div');
       sq.className = 'square';
 
@@ -486,8 +503,10 @@
 
   // Init
   const saved = localStorage.getItem('4kweeks_birthday');
+  const savedLifespan = localStorage.getItem('4kweeks_lifespan');
   if (saved) {
     birthday = new Date(saved + 'T00:00:00');
+    if (savedLifespan) lifespanYears = parseInt(savedLifespan);
     render();
   } else {
     modal.style.display = 'flex';
