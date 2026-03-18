@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4,000 Weeks</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+      max-width: 600px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      padding: 1rem 0 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 200;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      padding: 1rem 0;
+    }
+
+    .controls button {
+      background: transparent;
+      border: 1px solid #333;
+      color: #aaa;
+      padding: 0.4rem 1rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .controls button:hover {
+      border-color: #555;
+      color: #e0e0e0;
+    }
+
+    .controls button.active {
+      border-color: #e0e0e0;
+      color: #e0e0e0;
+    }
+
+    .reset-btn {
+      background: transparent;
+      border: 1px solid #222;
+      color: #555;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.65rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      margin-left: 0.5rem;
+    }
+
+    .reset-btn:hover {
+      border-color: #a33;
+      color: #c55;
+    }
+
+    #grid-container {
+      padding: 1rem;
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1px;
+    }
+
+    .square {
+      width: var(--sq-size);
+      height: var(--sq-size);
+      border-radius: 1px;
+      transition: background 0.1s;
+    }
+
+    .square.lived {
+      background: #2a2a2a;
+    }
+
+    .square.remaining {
+      background: #4a9eff22;
+      border: 1px solid #4a9eff15;
+    }
+
+    .square.current {
+      background: #4a9eff;
+      box-shadow: 0 0 4px #4a9eff88;
+    }
+
+    .square.beyond {
+      background: #1a1a1a;
+      opacity: 0.3;
+    }
+
+    /* Year labels for week view */
+    .year-row {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .year-label {
+      font-size: 0.55rem;
+      color: #444;
+      width: 28px;
+      text-align: right;
+      padding-right: 4px;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    #week-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    /* Birthday modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: #151515;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 2.5rem;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal h2 {
+      font-weight: 300;
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal p {
+      color: #888;
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .modal input[type="date"] {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      width: 100%;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .modal input[type="date"]:focus {
+      outline: none;
+      border-color: #4a9eff;
+    }
+
+    .modal button {
+      background: #4a9eff;
+      border: none;
+      color: #fff;
+      padding: 0.6rem 2rem;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .modal button:hover {
+      background: #3a8eef;
+    }
+
+    .modal button:disabled {
+      background: #333;
+      cursor: not-allowed;
+    }
+
+    .tooltip {
+      position: fixed;
+      background: #222;
+      border: 1px solid #444;
+      color: #ccc;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 50;
+      display: none;
+    }
+
+    footer {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: #333;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modal" style="display: none;">
+  <div class="modal">
+    <h2>When were you born?</h2>
+    <p>This stays in your browser. Nothing is sent anywhere.</p>
+    <input type="date" id="birthday-input" min="1920-01-01">
+    <br>
+    <button id="save-birthday" disabled>Begin</button>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<header>
+  <h1>4,000 Weeks</h1>
+  <p id="subtitle"></p>
+  <div class="stats" id="stats"></div>
+  <div class="controls" id="controls" style="display: none;">
+    <button id="btn-weeks" class="active">Weeks</button>
+    <button id="btn-days">Days</button>
+    <button class="reset-btn" id="btn-reset" title="Change birthday">Reset</button>
+  </div>
+</header>
+
+<div id="grid-container">
+  <div id="grid"></div>
+</div>
+
+<footer>
+  Based on an average lifespan of 80 years
+</footer>
+
+<script>
+  const LIFESPAN_YEARS = 80;
+  const WEEKS_IN_YEAR = 52;
+  const TOTAL_WEEKS = LIFESPAN_YEARS * WEEKS_IN_YEAR;
+  const TOTAL_DAYS = LIFESPAN_YEARS * 365;
+
+  let birthday = null;
+  let mode = 'weeks';
+
+  const grid = document.getElementById('grid');
+  const modal = document.getElementById('modal');
+  const bdayInput = document.getElementById('birthday-input');
+  const saveBtn = document.getElementById('save-birthday');
+  const controls = document.getElementById('controls');
+  const stats = document.getElementById('stats');
+  const subtitle = document.getElementById('subtitle');
+  const tooltip = document.getElementById('tooltip');
+  const btnWeeks = document.getElementById('btn-weeks');
+  const btnDays = document.getElementById('btn-days');
+  const btnReset = document.getElementById('btn-reset');
+
+  // Set max date to today
+  bdayInput.max = new Date().toISOString().split('T')[0];
+
+  bdayInput.addEventListener('input', () => {
+    saveBtn.disabled = !bdayInput.value;
+  });
+
+  saveBtn.addEventListener('click', () => {
+    if (!bdayInput.value) return;
+    birthday = new Date(bdayInput.value + 'T00:00:00');
+    localStorage.setItem('4kweeks_birthday', bdayInput.value);
+    modal.style.display = 'none';
+    render();
+  });
+
+  btnWeeks.addEventListener('click', () => { mode = 'weeks'; updateButtons(); render(); });
+  btnDays.addEventListener('click', () => { mode = 'days'; updateButtons(); render(); });
+  btnReset.addEventListener('click', () => {
+    localStorage.removeItem('4kweeks_birthday');
+    birthday = null;
+    controls.style.display = 'none';
+    stats.innerHTML = '';
+    subtitle.textContent = '';
+    grid.innerHTML = '';
+    modal.style.display = 'flex';
+  });
+
+  function updateButtons() {
+    btnWeeks.classList.toggle('active', mode === 'weeks');
+    btnDays.classList.toggle('active', mode === 'days');
+  }
+
+  function daysBetween(a, b) {
+    return Math.floor((b - a) / (1000 * 60 * 60 * 24));
+  }
+
+  function weeksBetween(a, b) {
+    return Math.floor(daysBetween(a, b) / 7);
+  }
+
+  function render() {
+    if (!birthday) return;
+
+    const now = new Date();
+    const livedDays = daysBetween(birthday, now);
+    const livedWeeks = weeksBetween(birthday, now);
+    const remainingDays = Math.max(0, TOTAL_DAYS - livedDays);
+    const remainingWeeks = Math.max(0, TOTAL_WEEKS - livedWeeks);
+    const ageYears = (livedDays / 365.25).toFixed(1);
+    const pctLived = ((livedDays / TOTAL_DAYS) * 100).toFixed(1);
+
+    subtitle.textContent = `Age ${ageYears} \u2014 ${pctLived}% elapsed`;
+
+    if (mode === 'weeks') {
+      stats.innerHTML = `
+        <div class="stat"><div class="stat-value">${livedWeeks.toLocaleString()}</div><div class="stat-label">weeks lived</div></div>
+        <div class="stat"><div class="stat-value">${remainingWeeks.toLocaleString()}</div><div class="stat-label">weeks remaining</div></div>
+      `;
+    } else {
+      stats.innerHTML = `
+        <div class="stat"><div class="stat-value">${livedDays.toLocaleString()}</div><div class="stat-label">days lived</div></div>
+        <div class="stat"><div class="stat-value">${remainingDays.toLocaleString()}</div><div class="stat-label">days remaining</div></div>
+      `;
+    }
+
+    controls.style.display = 'flex';
+
+    if (mode === 'weeks') {
+      renderWeeks(livedWeeks);
+    } else {
+      renderDays(livedDays);
+    }
+  }
+
+  function renderWeeks(livedWeeks) {
+    grid.innerHTML = '';
+    grid.id = 'week-grid';
+    grid.style.cssText = 'display: flex; flex-direction: column; gap: 1px;';
+    document.documentElement.style.setProperty('--sq-size', '8px');
+
+    for (let year = 0; year < LIFESPAN_YEARS; year++) {
+      const row = document.createElement('div');
+      row.className = 'year-row';
+
+      const label = document.createElement('div');
+      label.className = 'year-label';
+      label.textContent = year % 5 === 0 ? year : '';
+      row.appendChild(label);
+
+      for (let week = 0; week < WEEKS_IN_YEAR; week++) {
+        const idx = year * WEEKS_IN_YEAR + week;
+        const sq = document.createElement('div');
+        sq.className = 'square';
+
+        if (idx < livedWeeks) {
+          sq.classList.add('lived');
+        } else if (idx === livedWeeks) {
+          sq.classList.add('current');
+        } else if (idx < TOTAL_WEEKS) {
+          sq.classList.add('remaining');
+        } else {
+          sq.classList.add('beyond');
+        }
+
+        sq.dataset.year = year;
+        sq.dataset.week = week + 1;
+        sq.dataset.idx = idx;
+        row.appendChild(sq);
+      }
+      grid.appendChild(row);
+    }
+  }
+
+  function renderDays(livedDays) {
+    grid.innerHTML = '';
+    grid.id = 'grid';
+    grid.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: center; gap: 0px;';
+    document.documentElement.style.setProperty('--sq-size', '3px');
+
+    // Use a document fragment for performance
+    const frag = document.createDocumentFragment();
+
+    for (let i = 0; i < TOTAL_DAYS; i++) {
+      const sq = document.createElement('div');
+      sq.className = 'square';
+
+      if (i < livedDays) {
+        sq.classList.add('lived');
+      } else if (i === livedDays) {
+        sq.classList.add('current');
+      } else {
+        sq.classList.add('remaining');
+      }
+
+      sq.dataset.day = i;
+      frag.appendChild(sq);
+    }
+
+    grid.appendChild(frag);
+  }
+
+  // Tooltip
+  document.addEventListener('mousemove', (e) => {
+    const sq = e.target.closest('.square');
+    if (!sq) { tooltip.style.display = 'none'; return; }
+
+    let text = '';
+    if (mode === 'weeks') {
+      const year = parseInt(sq.dataset.year);
+      const week = parseInt(sq.dataset.week);
+      text = `Age ${year}, week ${week}`;
+    } else {
+      const day = parseInt(sq.dataset.day);
+      const year = Math.floor(day / 365);
+      const dayOfYear = day % 365;
+      text = `Age ${year}, day ${dayOfYear + 1}`;
+    }
+
+    tooltip.textContent = text;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY - 8) + 'px';
+  });
+
+  // Init
+  const saved = localStorage.getItem('4kweeks_birthday');
+  if (saved) {
+    birthday = new Date(saved + 'T00:00:00');
+    render();
+  } else {
+    modal.style.display = 'flex';
+  }
+</script>
+
+</body>
+</html>
