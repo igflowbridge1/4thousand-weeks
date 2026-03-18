@@ -167,6 +167,13 @@
       flex-shrink: 0;
     }
 
+    .year-label-right {
+      text-align: left;
+      padding-right: 0;
+      padding-left: 4px;
+      width: 36px;
+    }
+
     #week-grid {
       display: flex;
       flex-direction: column;
@@ -415,7 +422,11 @@
     grid.innerHTML = '';
     grid.id = 'week-grid';
     grid.style.cssText = 'display: flex; flex-direction: column; gap: 1px;';
-    document.documentElement.style.setProperty('--sq-size', '8px');
+    // Fit all rows in the viewport — reserve space for header/footer
+    const headerHeight = document.querySelector('header').offsetHeight + 40;
+    const availableHeight = window.innerHeight - headerHeight;
+    const sqSize = Math.max(2, Math.floor((availableHeight - lifespanYears) / lifespanYears));
+    document.documentElement.style.setProperty('--sq-size', sqSize + 'px');
 
     for (let year = 0; year < lifespanYears; year++) {
       const row = document.createElement('div');
@@ -423,7 +434,9 @@
 
       const label = document.createElement('div');
       label.className = 'year-label';
-      label.textContent = year % 5 === 0 ? year : '';
+      if (year % 10 === 0) {
+        label.textContent = year;
+      }
       row.appendChild(label);
 
       for (let week = 0; week < WEEKS_IN_YEAR; week++) {
@@ -446,6 +459,16 @@
         sq.dataset.idx = idx;
         row.appendChild(sq);
       }
+
+      const rightLabel = document.createElement('div');
+      rightLabel.className = 'year-label year-label-right';
+      if (year % 10 === 0) {
+        const labelDate = new Date(birthday);
+        labelDate.setFullYear(labelDate.getFullYear() + year);
+        rightLabel.textContent = labelDate.getFullYear();
+      }
+      row.appendChild(rightLabel);
+
       grid.appendChild(row);
     }
   }
@@ -454,7 +477,10 @@
     grid.innerHTML = '';
     grid.id = 'grid';
     grid.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: center; gap: 0px;';
-    document.documentElement.style.setProperty('--sq-size', '3px');
+    // Size days to fill available width
+    const availableWidth = Math.min(window.innerWidth - 40, 1160);
+    const sqSize = Math.max(3, Math.floor(availableWidth / Math.ceil(Math.sqrt(totalDays()))) - 1);
+    document.documentElement.style.setProperty('--sq-size', sqSize + 'px');
 
     // Use a document fragment for performance
     const frag = document.createDocumentFragment();
@@ -484,15 +510,19 @@
     if (!sq) { tooltip.style.display = 'none'; return; }
 
     let text = '';
+    const fmt = { month: 'short', day: 'numeric', year: 'numeric' };
     if (mode === 'weeks') {
       const year = parseInt(sq.dataset.year);
       const week = parseInt(sq.dataset.week);
-      text = `Age ${year}, week ${week}`;
+      const d = new Date(birthday);
+      d.setDate(d.getDate() + (year * WEEKS_IN_YEAR + week - 1) * 7);
+      text = `Age ${year}, week ${week} \u2014 ${d.toLocaleDateString(undefined, fmt)}`;
     } else {
       const day = parseInt(sq.dataset.day);
       const year = Math.floor(day / 365);
-      const dayOfYear = day % 365;
-      text = `Age ${year}, day ${dayOfYear + 1}`;
+      const d = new Date(birthday);
+      d.setDate(d.getDate() + day);
+      text = `Age ${year} \u2014 ${d.toLocaleDateString(undefined, fmt)}`;
     }
 
     tooltip.textContent = text;
